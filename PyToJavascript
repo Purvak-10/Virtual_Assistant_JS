@@ -1,0 +1,96 @@
+const pyttsx3 = require('pyttsx3');
+const speechRecognition = require('speech_recognition');
+const wikipedia = require('wikipedia');
+const webbrowser = require('webbrowser');
+const pyjokes = require('pyjokes');
+const sys = require('sys');
+const request = require('request');
+const pywhatkit = require('pywhatkit');
+const wolframalpha = require('wolframalpha');
+const urllib = require('urllib');
+const engine = pyttsx3.init('sapi5');
+engine.setProperty('rate', 178);
+const voices = engine.getProperty('voices');
+engine.setProperty('voice', voices[0].id);
+
+function speak(audio) {
+  engine.say(audio);
+  engine.runAndWait();
+}
+
+function weather(city) {
+  const apiKey = '67ea885767696169650db19aaebab5a7';
+  const baseUrl = 'http://api.openweathermap.org/data/2.5/weather?';
+  const cityName = city;
+  const completeUrl = baseUrl + 'appid=' + apiKey + '&q=' + cityName;
+  request(completeUrl, function (error, response, body) {
+    const data = JSON.parse(body);
+    if (data['cod'] != '404') {
+      const temperature = data['main']['temp'];
+      return temperature.toString();
+    }
+  });
+}
+
+function wishMe() {
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 12) {
+    speak('Good Morning!');
+  } else if (hour >= 12 && hour < 18) {
+    speak('Good Afternoon!');
+  } else {
+    speak('Good Evening!');
+  }
+  speak('Hello I am your friend jarvis. I am here to help you');
+}
+
+function username() {
+  speak('What should I call you sir');
+  const uname = takeCommand();
+  speak('Welcome Mister');
+  speak(uname);
+}
+
+function takeCommand() {
+  const r = speechRecognition.Recognizer();
+  console.log('Listening...');
+  r.pauseThreshold = 1.5;
+  r.listen(
+    (audio) => {
+      try {
+        console.log('Recognizing...');
+        const query = r.recognize_google(audio, { language: 'en-in' });
+        console.log(`User said: ${query}`);
+        return query;
+      } catch (e) {
+        console.log(e);
+        console.log('Say that again please...');
+        speak('Is there a problem, sir');
+        return 'None';
+      }
+    },
+    { phraseTimeLimit: 15 }
+  );
+}
+
+function main() {
+  wishMe();
+  username();
+  while (true) {
+    const query = takeCommand().toLowerCase();
+    if (query.includes('who is your creator') || query.includes('created')) {
+      speak('Mr Purvak Baliyan, Mr Yash Dewan and Mr Shivansh Sharma is my creator');
+    } else if (query.includes('who is')) {
+      speak('Searching Wikipedia...');
+      const command = query.replace('who is', '');
+      const results = wikipedia.summary(command, 2);
+      speak('According to Wikipedia');
+      console.log(results);
+      speak(results);
+    } else if (query.includes('what can you do')) {
+      speak(
+        "Hello Master, thank you for using me. I am your virtual assistant. I can help you with a lot of things like searching, playing music, opening Google, telling the time and weather, and many more too."
+      );
+    } else if (query.includes('write a note')) {
+      speak('What should I write, sir');
+      const note = takeCommand
